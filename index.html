@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Voltei</title>
+<meta name="description" content="Ton coffre-fort à morceaux, pour les retrouver dans 30 ans.">
+<meta name="theme-color" content="#FBF5EA">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Voltei">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+  @font-face { font-family: 'Fraunces'; font-weight: 600; font-display: swap; src: url('polices/fraunces-latin-600-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Fraunces'; font-weight: 700; font-display: swap; src: url('polices/fraunces-latin-700-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Atkinson Hyperlegible'; font-weight: 400; font-display: swap; src: url('polices/atkinson-hyperlegible-latin-400-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Atkinson Hyperlegible'; font-weight: 700; font-display: swap; src: url('polices/atkinson-hyperlegible-latin-700-normal.woff2') format('woff2'); }
+  :root {
+    --creme: #FBF5EA; --carte: #FFFDF8; --bord: #E8DCC4; --bord-fort: #D9CBB0;
+    --encre: #2B2118; --doux: #5E5040; --bleu: #1F4E6B; --bleu-pale: #E3EEF4; --bleu-trait: #9FB9CC;
+    --sable: #F1E6D3; --rouge: #9B2C1F; --rouge-pale: #F6E1DC;
+    --accent: #2E6A47; --accent-pale: #E1EFE5; --accent-trait: #9CC2AA;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: 'Atkinson Hyperlegible', system-ui, sans-serif;
+    font-size: 18px; line-height: 1.45;
+    background: var(--creme); color: var(--encre);
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    overflow-wrap: anywhere;
+  }
+  h1, h2, .vide strong, legend { font-family: 'Fraunces', Georgia, serif; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
+  header { display: flex; align-items: center; gap: 12px; padding: 8px 0 16px; }
+  header img { width: 44px; height: 44px; border-radius: 10px; }
+  header h1 { font-size: 30px; font-weight: 700; }
+  header p { color: var(--doux); font-size: 16px; }
+  button, input, textarea { font: inherit; color: inherit; }
+  .btn {
+    border: 0; border-radius: 12px; padding: 12px 18px; cursor: pointer;
+    background: var(--accent); color: var(--carte); font-weight: 600;
+  }
+  .btn.second { background: var(--sable); color: var(--encre); }
+  .btn.danger { background: transparent; color: var(--rouge); text-decoration: underline; padding: 12px 4px; }
+  .bar { display: flex; gap: 10px; margin-bottom: 16px; }
+  .bar input { flex: 1; }
+  input[type=text], input[type=url], input[type=search], textarea {
+    width: 100%; padding: 12px; border: 2px solid var(--bord); border-radius: 12px; background: var(--carte);
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  textarea { min-height: 90px; resize: vertical; }
+  .count { color: var(--doux); font-size: 16px; margin-bottom: 10px; }
+  .card {
+    background: var(--carte); border: 2px solid var(--bord); border-radius: 16px;
+    padding: 14px 16px; margin-bottom: 12px; cursor: pointer;
+  }
+  .card:active { border-color: var(--accent); }
+  .card h2 { font-size: 21px; font-weight: 600; line-height: 1.25; }
+  .card .artiste { color: var(--accent); font-weight: 600; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tag { font-size: 15px; padding: 3px 10px; border-radius: 20px; background: var(--sable); color: var(--encre); }
+  .tag.epoque { background: var(--encre); color: var(--creme); }
+  .tag.introuvable { background: var(--rouge-pale); color: var(--rouge); }
+  a.tag { text-decoration: none; background: var(--accent-pale); color: var(--accent); border: 1px solid var(--accent-trait); }
+  .note { margin-top: 8px; color: var(--doux); font-style: italic; }
+  .meta { margin-top: 8px; font-size: 15px; color: var(--doux); }
+  .vide { text-align: center; color: var(--doux); padding: 40px 10px; }
+  .vide strong { display: block; font-size: 20px; color: var(--encre); margin-bottom: 6px; }
+  footer { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; padding-top: 16px; border-top: 2px solid var(--bord); }
+  footer .btn { flex: 1 1 auto; }
+
+  /* Fiche */
+  #fiche { display: none; }
+  body.edition #liste { display: none; }
+  body.edition #fiche { display: block; }
+  .champ { margin-bottom: 18px; position: relative; }
+  .champ > label, .champ > .lbl { display: block; font-weight: 600; margin-bottom: 6px; }
+  .aide { font-size: 15px; color: var(--doux); margin-top: 4px; }
+  fieldset { border: 2px solid var(--bord); border-radius: 16px; padding: 14px; margin-bottom: 18px; background: var(--sable); }
+  legend { font-weight: 700; padding: 0 6px; }
+  .lien { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .lien input { flex: 1; }
+  .lien .pf { font-size: 14px; min-width: 70px; text-align: center; }
+  .lien button { background: none; border: 0; font-size: 22px; color: var(--rouge); cursor: pointer; padding: 4px 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .chip { border: 2px solid var(--bord-fort); background: var(--carte); border-radius: 20px; padding: 6px 14px; cursor: pointer; }
+  .chip.on { background: var(--accent); border-color: var(--accent); color: var(--carte); }
+  .coche { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+  .coche input { width: 22px; height: 22px; accent-color: var(--accent); }
+  #suggestions { list-style: none; background: var(--carte); border: 2px solid var(--accent); border-radius: 12px; margin-top: 6px; overflow: hidden; display: none; }
+  #suggestions li { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--sable); }
+  #suggestions li:last-child { border-bottom: 0; }
+  #suggestions li:active { background: var(--accent-pale); }
+  #suggestions small { display: block; color: var(--doux); }
+  .onglets { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .onglets .chip { font-size: 16px; }
+  .tag.chercher { background: var(--bleu); color: var(--creme); }
+  .tag.retrouve { background: var(--accent-pale); color: var(--accent); }
+  .card.aretrouver { border-style: dashed; border-color: var(--bleu-trait); }
+  .card .flou { color: var(--bleu); font-style: italic; }
+  .bravo { background: var(--accent-pale); color: var(--accent); border-radius: 12px; padding: 10px 12px; margin-bottom: 14px; display: none; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 8px; }
+  #infoLien { min-height: 1em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="icons/icon-192.png" alt="">
+    <div>
+      <h1>Voltei</h1>
+      <p>Ton coffre-fort à morceaux</p>
+    </div>
+  </header>
+
+  <!-- LISTE -->
+  <section id="liste">
+    <div class="bar">
+      <input type="search" id="recherche" placeholder="Cherche par souvenir&#8239;: podcast, ado, été…" aria-label="Rechercher">
+      <button class="btn" id="btnAjouter" aria-label="Ajouter un morceau">＋</button>
+    </div>
+    <div class="onglets" id="onglets">
+      <button type="button" class="chip on" data-f="tous">Tous</button>
+      <button type="button" class="chip" data-f="precieux">Précieux</button>
+      <button type="button" class="chip" data-f="aretrouver">À retrouver</button>
+    </div>
+    <p class="count" id="compteur"></p>
+    <div id="cartes"></div>
+    <footer>
+      <button class="btn second" id="btnSauver">Sauvegarder</button>
+      <button class="btn second" id="btnLisible">Version lisible</button>
+      <button class="btn second" id="btnRestaurer">Restaurer</button>
+      <input type="file" id="fichier" accept="application/json,.json" hidden>
+    </footer>
+  </section>
+
+  <!-- FICHE -->
+  <section id="fiche">
+    <form id="form" autocomplete="off">
+      <p class="bravo" id="bravo">Voltei&#8239;! Complète le titre et l'artiste, tes indices restent gardés.</p>
+      <div class="champ">
+        <span class="lbl">Ce morceau…</span>
+        <div class="chips" id="mode">
+          <button type="button" class="chip" data-m="precieux">est précieux</button>
+          <button type="button" class="chip" data-m="aretrouver">est à retrouver</button>
+        </div>
+      </div>
+      <div class="champ">
+        <label for="titre">Titre</label>
+        <input type="text" id="titre">
+        <ul id="suggestions"></ul>
+        <p class="aide" id="aideTitre">Tape quelques lettres&#8239;: je te propose des morceaux connus.</p>
+      </div>
+      <div class="champ">
+        <label for="artiste">Artiste</label>
+        <input type="text" id="artiste">
+      </div>
+      <div class="champ" id="champIndices">
+        <label for="indices">Ce dont tu te souviens</label>
+        <textarea id="indices" placeholder="un bout de paroles, une voix de femme, un saxophone, en portugais, très rythmé…"></textarea>
+      </div>
+
+      <fieldset>
+        <legend>Où l'écouter</legend>
+        <div id="liens"></div>
+        <button type="button" class="btn second" id="btnLien">＋ Coller un lien</button>
+        <p class="aide" id="infoLien"></p>
+        <div class="chips" id="supports"></div>
+        <label class="coche"><input type="checkbox" id="introuvable"> Pas disponible en écoute pour l'instant</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Pour t'en souvenir</legend>
+        <div class="champ">
+          <label for="epoque">Époque d'écoute</label>
+          <input type="text" id="epoque" list="lstEpoque" placeholder="ado, 2026, l'été à Lisbonne…">
+          <datalist id="lstEpoque"></datalist>
+        </div>
+        <div class="champ">
+          <label for="decouverte">Découvert via</label>
+          <input type="text" id="decouverte" list="lstDecouverte" placeholder="un podcast, la radio, quelqu'un…">
+          <datalist id="lstDecouverte"></datalist>
+        </div>
+        <div class="champ">
+          <label for="avecQui">Avec qui</label>
+          <input type="text" id="avecQui">
+        </div>
+        <div class="champ">
+          <label for="humeur">Humeur</label>
+          <input type="text" id="humeur" list="lstHumeur" placeholder="mélancolique, joyeuse…">
+          <datalist id="lstHumeur"></datalist>
+        </div>
+        <div class="champ">
+          <label for="note">Ce que ça t'évoque</label>
+          <textarea id="note" placeholder="Une phrase pour ton toi de dans 30 ans"></textarea>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button type="submit" class="btn">Ranger dans le coffre</button>
+        <button type="button" class="btn second" id="btnRetrouve">Je l'ai retrouvé&#8239;!</button>
+        <button type="button" class="btn second" id="btnAnnuler">Annuler</button>
+        <button type="button" class="btn danger" id="btnSupprimer">Supprimer</button>
+      </div>
+      <p class="meta" id="dateAjout"></p>
+    </form>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var NB = '\u202F';
+  var CLE = 'voltei_morceaux';
+  var SUPPORTS = ['CD', 'Vinyle', 'Cassette', 'Radio', 'Fichier', 'Chez quelqu\'un'];
+  var $ = function (id) { return document.getElementById(id); };
+
+  var morceaux = charger();
+  var enCours = null;      // id en édition, ou null pour un nouveau
+  var supportsChoisis = [];
+  var modeFiche = 'precieux';
+  var vientDEtreRetrouve = false;
+  var filtre = 'tous';
+
+  function charger() {
+    try { return JSON.parse(localStorage.getItem(CLE)) || []; } catch (e) { return []; }
+  }
+  function enregistrer() {
+    try { localStorage.setItem(CLE, JSON.stringify(morceaux)); }
+    catch (e) { alert('Impossible d\'enregistrer' + NB + ': ' + e.message); }
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function norm(s) {
+    return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+  function dateFr(iso) {
+    try { return new Date(iso).toLocaleDateString('fr-BE', { day: 'numeric', month: 'long', year: 'numeric' }); }
+    catch (e) { return ''; }
+  }
+
+  // ---------- Plateformes ----------
+  function plateforme(url) {
+    var u = String(url || '').toLowerCase();
+    if (/deezer\.(com|page\.link)/.test(u)) return 'Deezer';
+    if (/music\.youtube\.com/.test(u)) return 'YouTube Music';
+    if (/youtube\.com|youtu\.be/.test(u)) return 'YouTube';
+    if (/spotify\.com/.test(u)) return 'Spotify';
+    if (/music\.apple\.com/.test(u)) return 'Apple Music';
+    if (/soundcloud\.com/.test(u)) return 'SoundCloud';
+    if (/bandcamp\.com/.test(u)) return 'Bandcamp';
+    if (/qobuz\.com/.test(u)) return 'Qobuz';
+    if (/tidal\.com/.test(u)) return 'Tidal';
+    return 'Lien';
+  }
+
+  // ---------- Liste ----------
+  function texteRecherche(m) {
+    return norm([m.titre, m.artiste, m.indices, m.statut === 'aretrouver' ? 'a retrouver' : 'precieux', m.epoque, m.decouverte, m.avecQui, m.humeur, m.note,
+      (m.supports || []).join(' '), (m.liens || []).map(function (l) { return l.plateforme; }).join(' '),
+      m.introuvable ? 'introuvable' : ''].join(' '));
+  }
+
+  function afficherListe() {
+    var mots = norm($('recherche').value).split(/\s+/).filter(Boolean);
+    var tri = morceaux.slice().sort(function (a, b) { return (b.ajoute || '').localeCompare(a.ajoute || ''); });
+    var dansFiltre = tri.filter(function (m) {
+      return filtre === 'tous' || (m.statut || 'precieux') === filtre;
+    });
+    var vus = dansFiltre.filter(function (m) {
+      var t = texteRecherche(m);
+      return mots.every(function (w) { return t.indexOf(w) !== -1; });
+    });
+
+    var n = morceaux.length;
+    var nR = morceaux.filter(function (m) { return m.statut === 'aretrouver'; }).length;
+    var pl = function (k) { return k + ' morceau' + (k > 1 ? 'x' : ''); };
+    $('compteur').textContent = n === 0 ? '' :
+      (mots.length ? vus.length + ' sur ' + pl(dansFiltre.length) :
+       pl(n - nR) + ' précieux' + (nR ? ', ' + nR + ' à retrouver' : ''));
+
+    if (n === 0) {
+      $('cartes').innerHTML = '<div class="vide"><strong>Ton coffre est vide.</strong>' +
+        'Et si tu commençais par le morceau qui lui a donné son nom' + NB + '?</div>';
+      return;
+    }
+    if (!vus.length) {
+      $('cartes').innerHTML = '<div class="vide">' + (mots.length ? 'Rien ne correspond. Essaie un autre souvenir.' :
+        (filtre === 'aretrouver' ? 'Aucun morceau à retrouver. Tant mieux&#8239;!' : 'Rien ici pour l\'instant.')) + '</div>';
+      return;
+    }
+    $('cartes').innerHTML = vus.map(function (m) {
+      var aRetrouver = m.statut === 'aretrouver';
+      var tags = '';
+      if (aRetrouver) tags += '<span class="tag chercher">À retrouver</span>';
+      if (m.retrouve) tags += '<span class="tag retrouve">Retrouvé le ' + esc(dateFr(m.retrouve)) + '</span>';
+      if (m.epoque) tags += '<span class="tag epoque">' + esc(m.epoque) + '</span>';
+      (m.liens || []).forEach(function (l) {
+        tags += '<a class="tag" href="' + esc(l.url) + '" target="_blank" rel="noopener">▶ ' + esc(l.plateforme) + '</a>';
+      });
+      (m.supports || []).forEach(function (s) { tags += '<span class="tag">' + esc(s) + '</span>'; });
+      if (m.introuvable) tags += '<span class="tag introuvable">Pas en écoute</span>';
+      if (m.humeur) tags += '<span class="tag">' + esc(m.humeur) + '</span>';
+      var meta = [];
+      if (m.decouverte) meta.push('Découvert via ' + esc(m.decouverte));
+      if (m.avecQui) meta.push('avec ' + esc(m.avecQui));
+      meta.push('rangé le ' + esc(dateFr(m.ajoute)));
+      return '<article class="card' + (aRetrouver ? ' aretrouver' : '') + '" data-id="' + esc(m.id) + '">' +
+        '<h2>' + esc(m.titre || 'Morceau sans nom') + '</h2>' +
+        (m.artiste ? '<div class="artiste">' + esc(m.artiste) + '</div>' : '') +
+        (m.indices ? '<p class="flou">' + esc(m.indices) + '</p>' : '') +
+        (tags ? '<div class="tags">' + tags + '</div>' : '') +
+        (m.note ? '<p class="note">' + esc(m.note) + '</p>' : '') +
+        '<p class="meta">' + meta.join(' · ') + '</p></article>';
+    }).join('');
+  }
+
+  $('cartes').addEventListener('click', function (e) {
+    if (e.target.closest('a')) return; // un lien d'écoute s'ouvre sans ouvrir la fiche
+    var c = e.target.closest('.card');
+    if (c) ouvrirFiche(c.getAttribute('data-id'));
+  });
+  $('recherche').addEventListener('input', afficherListe);
+  $('onglets').addEventListener('click', function (e) {
+    var b = e.target.closest('.chip'); if (!b) return;
+    filtre = b.getAttribute('data-f');
+    Array.prototype.forEach.call(this.querySelectorAll('.chip'), function (c) { c.classList.toggle('on', c === b); });
+    afficherListe();
+  });
+
+  function afficherMode() {
+    var r = modeFiche === 'aretrouver';
+    Array.prototype.forEach.call($('mode').querySelectorAll('.chip'), function (c) {
+      c.classList.toggle('on', c.getAttribute('data-m') === modeFiche);
+    });
+    $('champIndices').style.display = (r || $('indices').value.trim()) ? '' : 'none';
+    $('aideTitre').textContent = r ? 'Si tu ne le connais pas, laisse vide. Tes indices suffisent.'
+      : 'Tape quelques lettres' + NB + ': je te propose des morceaux connus.';
+    $('btnRetrouve').style.display = (r && enCours) ? '' : 'none';
+  }
+  $('mode').addEventListener('click', function (e) {
+    var b = e.target.closest('.chip'); if (!b) return;
+    modeFiche = b.getAttribute('data-m');
+    afficherMode();
+  });
+  $('btnRetrouve').addEventListener('click', function () {
+    modeFiche = 'precieux';
+    vientDEtreRetrouve = true;
+    afficherMode();
+    $('bravo').style.display = 'block';
+    window.scrollTo(0, 0);
+    $('titre').focus();
+  });
+  $('btnAjouter').addEventListener('click', function () { ouvrirFiche(null); });
+
+  // ---------- Fiche ----------
+  function remplirListes() {
+    function remplir(idListe, champ) {
+      var vals = {};
+      morceaux.forEach(function (m) { if (m[champ]) vals[m[champ]] = 1; });
+      $(idListe).innerHTML = Object.keys(vals).sort().map(function (v) {
+        return '<option value="' + esc(v) + '">';
+      }).join('');
+    }
+    remplir('lstEpoque', 'epoque');
+    remplir('lstDecouverte', 'decouverte');
+    remplir('lstHumeur', 'humeur');
+  }
+
+  function afficherSupports() {
+    $('supports').innerHTML = SUPPORTS.map(function (s) {
+      var on = supportsChoisis.indexOf(s) !== -1;
+      return '<button type="button" class="chip' + (on ? ' on' : '') + '" data-s="' + esc(s) + '">' + esc(s) + '</button>';
+    }).join('');
+  }
+  $('supports').addEventListener('click', function (e) {
+    var b = e.target.closest('.chip'); if (!b) return;
+    var s = b.getAttribute('data-s'), i = supportsChoisis.indexOf(s);
+    if (i === -1) supportsChoisis.push(s); else supportsChoisis.splice(i, 1);
+    afficherSupports();
+  });
+
+  function ajouterLigneLien(url) {
+    var div = document.createElement('div');
+    div.className = 'lien';
+    div.innerHTML = '<input type="url" placeholder="https://…" aria-label="Lien d\'écoute">' +
+      '<span class="tag pf"></span><button type="button" aria-label="Retirer ce lien">×</button>';
+    var input = div.querySelector('input'), pf = div.querySelector('.pf');
+    input.value = url || '';
+    function maj() { pf.textContent = input.value.trim() ? plateforme(input.value) : '…'; }
+    input.addEventListener('input', maj);
+    input.addEventListener('change', function () { maj(); deviner(input.value.trim()); });
+    div.querySelector('button').addEventListener('click', function () { div.remove(); });
+    maj();
+    $('liens').appendChild(div);
+    return input;
+  }
+  $('btnLien').addEventListener('click', function () { ajouterLigneLien('').focus(); });
+
+  function ouvrirFiche(id, prerempli) {
+    var m = id ? morceaux.find(function (x) { return x.id === id; }) : null;
+    enCours = m ? m.id : null;
+    var d = m || prerempli || {};
+    $('titre').value = d.titre || '';
+    $('artiste').value = d.artiste || '';
+    $('epoque').value = d.epoque || '';
+    $('decouverte').value = d.decouverte || '';
+    $('avecQui').value = d.avecQui || '';
+    $('humeur').value = d.humeur || '';
+    $('note').value = d.note || '';
+    $('indices').value = d.indices || '';
+    $('introuvable').checked = !!d.introuvable;
+    modeFiche = d.statut || (filtre === 'aretrouver' ? 'aretrouver' : 'precieux');
+    vientDEtreRetrouve = false;
+    $('bravo').style.display = 'none';
+    supportsChoisis = (d.supports || []).slice();
+    $('liens').innerHTML = '';
+    (d.liens || []).forEach(function (l) { ajouterLigneLien(l.url); });
+    $('infoLien').textContent = '';
+    $('suggestions').style.display = 'none';
+    $('btnSupprimer').style.display = m ? '' : 'none';
+    $('dateAjout').textContent = m ? 'Rangé le ' + dateFr(m.ajoute) : '';
+    afficherSupports();
+    afficherMode();
+    remplirListes();
+    document.body.classList.add('edition');
+    window.scrollTo(0, 0);
+    if (!m && !(prerempli && prerempli.titre)) $('titre').focus();
+  }
+
+  function fermerFiche() {
+    document.body.classList.remove('edition');
+    enCours = null;
+    afficherListe();
+  }
+  $('btnAnnuler').addEventListener('click', fermerFiche);
+
+  $('form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var titre = $('titre').value.trim();
+    var indices = $('indices').value.trim();
+    if (modeFiche === 'precieux' && !titre) {
+      alert('Il me faut au moins le titre' + NB + '. Si tu ne le connais pas, choisis «' + NB + 'à retrouver' + NB + '».');
+      $('titre').focus(); return;
+    }
+    if (modeFiche === 'aretrouver' && !titre && !indices && !$('note').value.trim()) {
+      alert('Note au moins un souvenir, même minuscule' + NB + '!');
+      $('indices').focus(); return;
+    }
+    var liens = Array.prototype.map.call($('liens').querySelectorAll('input'), function (i) {
+      return i.value.trim();
+    }).filter(Boolean).map(function (u) { return { url: u, plateforme: plateforme(u) }; });
+    var maintenant = new Date().toISOString();
+    var donnees = {
+      statut: modeFiche,
+      titre: titre,
+      artiste: $('artiste').value.trim(),
+      indices: indices,
+      liens: liens,
+      supports: supportsChoisis.slice(),
+      introuvable: $('introuvable').checked,
+      epoque: $('epoque').value.trim(),
+      decouverte: $('decouverte').value.trim(),
+      avecQui: $('avecQui').value.trim(),
+      humeur: $('humeur').value.trim(),
+      note: $('note').value.trim(),
+      modifie: maintenant
+    };
+    if (vientDEtreRetrouve) donnees.retrouve = maintenant;
+    if (enCours) {
+      var m = morceaux.find(function (x) { return x.id === enCours; });
+      Object.assign(m, donnees);
+    } else {
+      donnees.id = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      donnees.ajoute = maintenant;
+      morceaux.push(donnees);
+    }
+    enregistrer();
+    $('recherche').value = '';
+    fermerFiche();
+  });
+
+  $('btnSupprimer').addEventListener('click', function () {
+    var m = morceaux.find(function (x) { return x.id === enCours; });
+    if (!m) return;
+    if (!confirm('Retirer «' + NB + (m.titre || 'ce morceau sans nom') + NB + '» du coffre' + NB + '?')) return;
+    morceaux = morceaux.filter(function (x) { return x.id !== enCours; });
+    enregistrer();
+    fermerFiche();
+  });
+
+  // ---------- Suggestions (recherche publique Apple) ----------
+  var minuterie = null, derniereRequete = 0;
+  function suggerer() {
+    clearTimeout(minuterie);
+    var q = ($('titre').value + ' ' + $('artiste').value).trim();
+    if (q.length < 3) { $('suggestions').style.display = 'none'; return; }
+    minuterie = setTimeout(function () {
+      var num = ++derniereRequete;
+      fetch('https://itunes.apple.com/search?entity=song&limit=6&country=BE&term=' + encodeURIComponent(q))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (num !== derniereRequete) return;
+          var res = (data.results || []);
+          if (!res.length) { $('suggestions').style.display = 'none'; return; }
+          $('suggestions').innerHTML = res.map(function (r) {
+            return '<li data-t="' + esc(r.trackName) + '" data-a="' + esc(r.artistName) + '">' +
+              esc(r.trackName) + '<small>' + esc(r.artistName) +
+              (r.releaseDate ? ' · ' + esc(r.releaseDate.slice(0, 4)) : '') + '</small></li>';
+          }).join('');
+          $('suggestions').style.display = 'block';
+        })
+        .catch(function () { $('suggestions').style.display = 'none'; });
+    }, 450);
+  }
+  $('titre').addEventListener('input', suggerer);
+  $('suggestions').addEventListener('click', function (e) {
+    var li = e.target.closest('li'); if (!li) return;
+    $('titre').value = li.getAttribute('data-t');
+    $('artiste').value = li.getAttribute('data-a');
+    $('suggestions').style.display = 'none';
+  });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('#suggestions') && e.target.id !== 'titre') $('suggestions').style.display = 'none';
+  });
+
+  // ---------- Deviner titre et artiste à partir d'un lien ----------
+  function remplirSiVide(titre, artiste) {
+    var fait = false;
+    if (titre && !$('titre').value.trim()) { $('titre').value = titre; fait = true; }
+    if (artiste && !$('artiste').value.trim()) { $('artiste').value = artiste; fait = true; }
+    if (fait) $('infoLien').textContent = 'Titre et artiste repris du lien. Vérifie-les.';
+  }
+
+  function deviner(url) {
+    if (!url) return;
+    $('infoLien').textContent = '';
+    if (/link\.deezer\.com|deezer\.page\.link/i.test(url)) {
+      $('infoLien').textContent = 'Lien court Deezer gardé, mais il ne me dit pas le titre' + NB + ': tape-le, je t\'aide.';
+      return;
+    }
+    var dz = url.match(/deezer\.com\/(?:[a-z]{2}\/)?track\/(\d+)/i);
+    if (dz) { deezerJsonp(dz[1]); return; }
+    if (/youtube\.com|youtu\.be|soundcloud\.com|spotify\.com/i.test(url)) {
+      fetch('https://noembed.com/embed?url=' + encodeURIComponent(url))
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.title) return;
+          var t = d.title.replace(/\s*[\(\[](official|clip|lyric|audio|video|vidéo)[^\)\]]*[\)\]]/ig, '').trim();
+          var parties = t.split(/\s+[-–—]\s+/);
+          if (parties.length >= 2) remplirSiVide(parties.slice(1).join(' - '), parties[0]);
+          else remplirSiVide(t, (d.author_name || '').replace(/\s*-\s*Topic$/i, ''));
+        })
+        .catch(function () {});
+    }
+  }
+
+  function deezerJsonp(id) {
+    var nom = 'voltei_dz_' + Date.now();
+    var s = document.createElement('script');
+    window[nom] = function (d) {
+      if (d && d.title) remplirSiVide(d.title, d.artist && d.artist.name);
+      delete window[nom]; s.remove();
+    };
+    s.src = 'https://api.deezer.com/track/' + id + '?output=jsonp&callback=' + nom;
+    s.onerror = function () { delete window[nom]; s.remove(); };
+    document.body.appendChild(s);
+  }
+
+  // ---------- Sauvegarde, version lisible, restauration ----------
+  function telecharger(nom, contenu, type) {
+    var blob = new Blob([contenu], { type: type });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = nom;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  }
+  function jour() { return new Date().toISOString().slice(0, 10); }
+
+  $('btnSauver').addEventListener('click', function () {
+    if (!morceaux.length) { alert('Ton coffre est encore vide.'); return; }
+    telecharger('voltei-sauvegarde-' + jour() + '.json',
+      JSON.stringify({ appli: 'Voltei', version: 1, exporte: new Date().toISOString(), morceaux: morceaux }, null, 2),
+      'application/json');
+  });
+
+  $('btnLisible').addEventListener('click', function () {
+    if (!morceaux.length) { alert('Ton coffre est encore vide.'); return; }
+    var lignes = ['VOLTEI — mon coffre à morceaux', 'Exporté le ' + dateFr(new Date().toISOString()), ''];
+    var ordre = morceaux.slice().sort(function (a, b) { return (a.ajoute || '').localeCompare(b.ajoute || ''); });
+    [['precieux', 'MORCEAUX PRÉCIEUX'], ['aretrouver', 'MORCEAUX À RETROUVER']].forEach(function (g) {
+      var groupe = ordre.filter(function (m) { return (m.statut || 'precieux') === g[0]; });
+      if (!groupe.length) return;
+      lignes.push('==== ' + g[1] + ' ====', '');
+      groupe.forEach(function (m) {
+        lignes.push('■ ' + (m.titre || 'Morceau sans nom') + (m.artiste ? ' — ' + m.artiste : ''));
+        if (m.indices) lignes.push('   Ce dont je me souviens' + NB + ': ' + m.indices);
+        if (m.retrouve) lignes.push('   Retrouvé le ' + dateFr(m.retrouve));
+        if (m.epoque) lignes.push('   Époque' + NB + ': ' + m.epoque);
+        if (m.decouverte) lignes.push('   Découvert via' + NB + ': ' + m.decouverte);
+        if (m.avecQui) lignes.push('   Avec' + NB + ': ' + m.avecQui);
+        if (m.humeur) lignes.push('   Humeur' + NB + ': ' + m.humeur);
+        if (m.note) lignes.push('   ' + m.note);
+        (m.liens || []).forEach(function (l) { lignes.push('   ' + l.plateforme + NB + ': ' + l.url); });
+        if ((m.supports || []).length) lignes.push('   Supports' + NB + ': ' + m.supports.join(', '));
+        if (m.introuvable) lignes.push('   Pas disponible en écoute');
+        lignes.push('   Rangé le ' + dateFr(m.ajoute), '');
+      });
+    });
+    telecharger('voltei-' + jour() + '.txt', lignes.join('\n'), 'text/plain;charset=utf-8');
+  });
+
+  $('btnRestaurer').addEventListener('click', function () { $('fichier').click(); });
+  $('fichier').addEventListener('change', function () {
+    var f = this.files[0]; if (!f) return;
+    var lecteur = new FileReader();
+    lecteur.onload = function () {
+      try {
+        var d = JSON.parse(lecteur.result);
+        var arr = Array.isArray(d) ? d : d.morceaux;
+        if (!Array.isArray(arr)) throw new Error('fichier non reconnu');
+        var nouveaux = 0, remplaces = 0;
+        arr.forEach(function (m) {
+          if (!m || !m.id || !(m.titre || m.indices || m.note)) return;
+          var i = morceaux.findIndex(function (x) { return x.id === m.id; });
+          if (i === -1) { morceaux.push(m); nouveaux++; } else { morceaux[i] = m; remplaces++; }
+        });
+        enregistrer();
+        afficherListe();
+        alert(nouveaux + ' morceau(x) ajouté(s), ' + remplaces + ' mis à jour.');
+      } catch (e) {
+        alert('Ce fichier n\'est pas une sauvegarde Voltei' + NB + ': ' + e.message);
+      }
+    };
+    lecteur.readAsText(f);
+    this.value = '';
+  });
+
+  // ---------- Partage reçu (Android) ----------
+  (function partageRecu() {
+    var p = new URLSearchParams(location.search);
+    var titre = p.get('title') || '', texte = p.get('text') || '', url = p.get('url') || '';
+    if (!titre && !texte && !url) return;
+    if (!url) { var m = texte.match(/https?:\/\/\S+/); if (m) url = m[0]; }
+    history.replaceState(null, '', location.pathname);
+    ouvrirFiche(null, { liens: url ? [{ url: url }] : [] });
+    if (url) deviner(url);
+  })();
+
+  afficherListe();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    });
+  }
+})();
+</script>
+</body>
+</html>
