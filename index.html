@@ -153,6 +153,7 @@
           <button type="button" class="chip" data-m="denicher">à dénicher</button>
           <button type="button" class="chip" data-m="aretrouver">à retrouver</button>
         </div>
+        <p class="aide" id="aideStatut"></p>
       </div>
       <div class="champ">
         <label for="titre">Titre</label>
@@ -205,7 +206,7 @@
       </fieldset>
 
       <div class="actions">
-        <button type="submit" class="btn">Ranger dans le coffre</button>
+        <button type="submit" class="btn">Enregistrer</button>
         <button type="button" class="btn second" id="btnEtape"></button>
         <button type="button" class="btn second" id="btnAnnuler">Annuler</button>
         <button type="button" class="btn danger" id="btnSupprimer">Supprimer</button>
@@ -224,6 +225,11 @@
   var $ = function (id) { return document.getElementById(id); };
 
   var LIB = { coffre: 'au coffre', denicher: 'à dénicher', aretrouver: 'à retrouver' };
+  var SENS = {
+    coffre: 'Tu le connais, et tu peux l\'écouter comme il te convient.',
+    denicher: 'Tu le connais, mais il te manque une bonne façon de l\'écouter.',
+    aretrouver: 'Tu ne sais pas encore ce que c\'est.'
+  };
   var morceaux = charger();
   var enCours = null;      // id en édition, ou null pour un nouveau
   var supportsChoisis = [];
@@ -363,6 +369,7 @@
     $('champIndices').style.display = (r || $('indices').value.trim()) ? '' : 'none';
     $('aideTitre').textContent = r ? 'Si tu ne le connais pas, laisse vide. Tes indices suffisent.'
       : 'Tape quelques lettres' + NB + ': je te propose des morceaux connus.';
+    $('aideStatut').textContent = SENS[modeFiche] || '';
     var b = $('btnEtape');
     b.style.display = (enCours && modeFiche !== 'coffre') ? '' : 'none';
     b.textContent = r ? 'Je l\'ai identifié' + NB + '!' : 'Je l\'ai déniché' + NB + '!';
@@ -504,6 +511,9 @@
     if (enCours) {
       var m = morceaux.find(function (x) { return x.id === enCours; });
       Object.assign(m, donnees);
+      // En reculant d'une étape, la date de cette étape n'a plus de sens
+      if (m.statut !== 'coffre') delete m.deniche;
+      if (m.statut === 'aretrouver') delete m.identifie;
     } else {
       donnees.id = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       donnees.ajoute = maintenant;
