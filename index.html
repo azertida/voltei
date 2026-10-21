@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Voltei</title>
-<meta name="description" content="Ton coffre-fort à morceaux, pour les retrouver dans 30 ans.">
+<meta name="description" content="Ton coffre-fort à musique, pour retrouver tes morceaux dans 30 ans.">
 <meta name="theme-color" content="#FBF5EA">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-180.png?v=3">
@@ -35,9 +35,10 @@
     padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
     overflow-wrap: anywhere;
   }
-  h1, h2, .vide strong, legend { font-family: 'Fraunces', Georgia, serif; }
+  h1, h2, h3, .vide strong { font-family: 'Fraunces', Georgia, serif; }
   .wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
-  header { display: flex; align-items: center; gap: 12px; padding: 8px 0 16px; }
+  header { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; column-gap: 12px; padding: 8px 0 16px; }
+  header p { grid-column: 2 / 4; margin-top: -2px; }
   header img { width: 44px; height: 44px; border-radius: 10px; }
   header h1 { font-size: 30px; font-weight: 700; }
   header p { color: var(--doux); font-size: 16px; }
@@ -48,8 +49,12 @@
   }
   .btn.second { background: var(--sable); color: var(--encre); }
   .btn.danger { background: transparent; color: var(--rouge); text-decoration: underline; padding: 12px 4px; }
-  .bar { display: flex; gap: 10px; margin-bottom: 16px; }
-  .bar input { flex: 1; }
+  header #btnAjouter { white-space: nowrap; padding: 10px 16px; }
+  body.edition header #btnAjouter { display: none; }
+  .trouver { border: 2px solid var(--bord); border-radius: 16px; background: var(--sable); padding: 12px; margin-bottom: 12px; }
+  .trouver .chip:not(.on) { background: var(--carte); }
+  .trouver input { margin-bottom: 10px; }
+  .trouver .onglets { margin-bottom: 0; }
   input[type=text], input[type=url], input[type=search], textarea {
     width: 100%; padding: 12px; border: 2px solid var(--bord); border-radius: 12px; background: var(--carte);
   }
@@ -81,8 +86,10 @@
   .champ { margin-bottom: 18px; position: relative; }
   .champ > label, .champ > .lbl { display: block; font-weight: 600; margin-bottom: 6px; }
   .aide { font-size: 15px; color: var(--doux); margin-top: 4px; }
-  fieldset { border: 2px solid var(--bord); border-radius: 16px; padding: 14px; margin-bottom: 18px; background: var(--sable); }
-  legend { font-weight: 700; padding: 0 6px; }
+  .bloc { border: 2px solid var(--bord); border-radius: 16px; padding: 14px 14px 4px; margin-bottom: 18px; background: var(--sable); }
+  .bloc .btn.second, .bloc .tag { background: var(--carte); border: 2px solid var(--bord); }
+  .bloc .btn.second { padding: 8px 14px; margin-bottom: 4px; }
+  .bloc > h3 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
   .lien { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
   .lien input { flex: 1; }
   .lien .pf { font-size: 14px; min-width: 70px; text-align: center; }
@@ -107,36 +114,34 @@
   .card .flou { color: var(--bleu); font-style: italic; }
   .bravo { background: var(--accent-pale); color: var(--accent); border-radius: 12px; padding: 10px 12px; margin-bottom: 14px; display: none; }
   .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 8px; }
-  #infoLien { min-height: 1em; }
+  #infoLien:empty { display: none; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <img src="icons/icon-192.png?v=3" alt="">
-    <div>
-      <h1>Voltei</h1>
-      <p>Ton coffre-fort à morceaux</p>
-    </div>
+    <h1>Voltei</h1>
+    <button class="btn" id="btnAjouter">＋ Ajouter</button>
+    <p>Ton coffre-fort à musique</p>
   </header>
 
   <!-- LISTE -->
   <section id="liste">
-    <div class="bar">
-      <input type="search" id="recherche" placeholder="Cherche par souvenir&#8239;: podcast, ado, été…" aria-label="Rechercher">
-      <button class="btn" id="btnAjouter" aria-label="Ajouter un morceau">＋</button>
-    </div>
-    <div class="onglets" id="onglets">
+    <div class="trouver">
+      <input type="search" id="recherche" placeholder="Cherche par souvenir…" aria-label="Rechercher">
+      <div class="onglets" id="onglets">
       <button type="button" class="chip on" data-f="tous">Tous</button>
       <button type="button" class="chip" data-f="coffre">Au coffre</button>
       <button type="button" class="chip" data-f="denicher">À dénicher</button>
-      <button type="button" class="chip" data-f="aretrouver">À retrouver</button>
+        <button type="button" class="chip" data-f="aretrouver">À retrouver</button>
+      </div>
     </div>
     <p class="count" id="compteur"></p>
     <div id="cartes"></div>
     <footer>
       <button class="btn second" id="btnSauver">Sauvegarder</button>
-      <button class="btn second" id="btnLisible">Version lisible</button>
+      <button class="btn second" id="btnLisible">Exporter en texte</button>
       <button class="btn second" id="btnRestaurer">Restaurer</button>
       <input type="file" id="fichier" accept="application/json,.json" hidden>
     </footer>
@@ -170,16 +175,16 @@
         <textarea id="indices" placeholder="un bout de paroles, une voix de femme, un saxophone, en portugais, très rythmé…"></textarea>
       </div>
 
-      <fieldset>
-        <legend>Où l'écouter</legend>
+      <section class="bloc">
+        <h3>Où l'écouter</h3>
         <div id="liens"></div>
         <button type="button" class="btn second" id="btnLien">＋ Coller un lien</button>
         <p class="aide" id="infoLien"></p>
         <div class="chips" id="supports"></div>
-      </fieldset>
+      </section>
 
-      <fieldset>
-        <legend>Pour t'en souvenir</legend>
+      <section class="bloc">
+        <h3>Pour t'en souvenir</h3>
         <div class="champ">
           <label for="epoque">Époque d'écoute</label>
           <input type="text" id="epoque" list="lstEpoque" placeholder="ado, 2026, l'été à Lisbonne…">
@@ -203,7 +208,7 @@
           <label for="note">Ce que ça t'évoque</label>
           <textarea id="note" placeholder="Une phrase pour ton toi de dans 30 ans"></textarea>
         </div>
-      </fieldset>
+      </section>
 
       <div class="actions">
         <button type="submit" class="btn">Enregistrer</button>
@@ -221,7 +226,7 @@
   'use strict';
   var NB = '\u202F';
   var CLE = 'voltei_morceaux';
-  var SUPPORTS = ['CD', 'Vinyle', 'Cassette', 'Radio', 'Fichier', 'Chez quelqu\'un'];
+  var SUPPORTS = ['Streaming', 'CD', 'Vinyle', 'Cassette', 'Radio', 'Fichier', 'Chez quelqu\'un'];
   var $ = function (id) { return document.getElementById(id); };
 
   var LIB = { coffre: 'au coffre', denicher: 'à dénicher', aretrouver: 'à retrouver' };
@@ -390,7 +395,7 @@
       modeFiche = 'coffre'; etapes.deniche = true;
       bravo.textContent = 'Voltei' + NB + '! Ajoute où l\'écouter' + NB + ': un lien ou un support.';
       afficherMode(); bravo.style.display = 'block';
-      $('liens').closest('fieldset').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      $('liens').closest('.bloc').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   });
   $('btnAjouter').addEventListener('click', function () { ouvrirFiche(null); });
@@ -631,7 +636,7 @@
 
   $('btnLisible').addEventListener('click', function () {
     if (!morceaux.length) { alert('Ton coffre est encore vide.'); return; }
-    var lignes = ['VOLTEI — mon coffre à morceaux', 'Exporté le ' + dateFr(new Date().toISOString()), ''];
+    var lignes = ['VOLTEI — mon coffre-fort à musique', 'Exporté le ' + dateFr(new Date().toISOString()), ''];
     var ordre = morceaux.slice().sort(function (a, b) { return (a.ajoute || '').localeCompare(b.ajoute || ''); });
     [['coffre', 'AU COFFRE'], ['denicher', 'À DÉNICHER'], ['aretrouver', 'À RETROUVER']].forEach(function (g) {
       var groupe = ordre.filter(function (m) { return m.statut === g[0]; });

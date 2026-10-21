@@ -1,7 +1,7 @@
 {
   "name": "Voltei",
   "short_name": "Voltei",
-  "description": "Ton coffre-fort à morceaux : les précieux et ceux à retrouver.",
+  "description": "Ton coffre-fort à musique : les morceaux à garder, à dénicher et à retrouver.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",
