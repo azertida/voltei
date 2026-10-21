@@ -96,7 +96,19 @@
   .lien button { background: none; border: 0; font-size: 22px; color: var(--rouge); cursor: pointer; padding: 4px 8px; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
   .chip { border: 2px solid var(--bord-fort); background: var(--carte); border-radius: 20px; padding: 6px 14px; cursor: pointer; }
+  .statuts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .statuts .chip { padding: 6px 4px; text-align: center; white-space: nowrap; }
   .chip.on { background: var(--accent); border-color: var(--accent); color: var(--carte); }
+  .card.groupe { box-shadow: 6px 6px 0 -2px var(--bord-fort); margin-bottom: 18px; }
+  .tag.collection { background: var(--encre); color: var(--carte); }
+  .groupe .resume { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; color: var(--doux); font-size: 16px; }
+  .versions { list-style: none; margin-top: 10px; }
+  .versions li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--bord); cursor: pointer; }
+  .versions li strong { font-weight: 700; }
+  .versions li .tag { white-space: nowrap; flex-shrink: 0; }
+  .versions li small { display: block; color: var(--doux); font-size: 15px; }
+  .tag.aucoffre { background: var(--accent-pale); color: var(--accent); }
+  .groupe .ajoutVersion { margin-top: 8px; width: 100%; }
   .coche { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
   .coche input { width: 22px; height: 22px; accent-color: var(--accent); }
   #suggestions { list-style: none; background: var(--carte); border: 2px solid var(--accent); border-radius: 12px; margin-top: 6px; overflow: hidden; display: none; }
@@ -153,12 +165,12 @@
       <p class="bravo" id="bravo"></p>
       <div class="champ">
         <span class="lbl">Ce morceau est…</span>
-        <div class="chips" id="mode">
+        <div class="chips statuts" id="mode">
           <button type="button" class="chip" data-m="coffre">au coffre</button>
           <button type="button" class="chip" data-m="denicher">à dénicher</button>
           <button type="button" class="chip" data-m="aretrouver">à retrouver</button>
         </div>
-        <p class="aide" id="aideStatut"></p>
+        <p class="aide aideStatut"></p>
       </div>
       <div class="champ">
         <label for="titre">Titre</label>
@@ -169,6 +181,8 @@
       <div class="champ">
         <label for="artiste">Artiste</label>
         <input type="text" id="artiste">
+        <label class="coche"><input type="checkbox" id="collection"> Je collectionne ses versions</label>
+        <p class="aide" id="aideCollection"></p>
       </div>
       <div class="champ" id="champIndices">
         <label for="indices">Ce dont tu te souviens</label>
@@ -210,6 +224,15 @@
         </div>
       </section>
 
+      <div class="champ">
+        <span class="lbl">Ce morceau est…</span>
+        <div class="chips statuts" id="mode2">
+          <button type="button" class="chip" data-m="coffre">au coffre</button>
+          <button type="button" class="chip" data-m="denicher">à dénicher</button>
+          <button type="button" class="chip" data-m="aretrouver">à retrouver</button>
+        </div>
+        <p class="aide aideStatut"></p>
+      </div>
       <div class="actions">
         <button type="submit" class="btn">Enregistrer</button>
         <button type="button" class="btn second" id="btnEtape"></button>
@@ -292,8 +315,14 @@
   }
 
   // ---------- Liste ----------
+  function cleTitre(t) { return norm(t).replace(/\s+/g, ' ').trim(); }
+  function estCollection(cle) {
+    return !!cle && morceaux.some(function (x) { return x.collection && cleTitre(x.titre) === cle; });
+  }
+  var ouverts = {};   // collections dépliées dans la liste
+
   function texteRecherche(m) {
-    return norm([m.titre, m.artiste, m.indices, LIB[m.statut], m.epoque, m.decouverte, m.avecQui, m.humeur, m.note,
+    return norm([m.titre, m.artiste, m.indices, LIB[m.statut], m.collection ? 'collection versions' : '', m.epoque, m.decouverte, m.avecQui, m.humeur, m.note,
       (m.supports || []).join(' '), (m.liens || []).map(function (l) { return l.plateforme; }).join(' ')].join(' '));
   }
 
@@ -327,7 +356,55 @@
          filtre === 'denicher' ? 'Rien à dénicher. Tout s\'écoute&#8239;!' : 'Rien ici pour l\'instant.')) + '</div>';
       return;
     }
-    $('cartes').innerHTML = vus.map(function (m) {
+    // Regrouper les versions d'un même titre collectionné
+    var blocs = [], groupes = {};
+    vus.forEach(function (m) {
+      var cle = m.collection && m.titre ? cleTitre(m.titre) : '';
+      if (!cle) { blocs.push({ seul: m }); return; }
+      if (!groupes[cle]) { groupes[cle] = { cle: cle, titre: m.titre, versions: [] }; blocs.push({ groupe: groupes[cle] }); }
+      groupes[cle].versions.push(m);
+    });
+    $('cartes').innerHTML = blocs.map(function (b) { return b.seul ? carte(b.seul) : carteGroupe(b.groupe); }).join('');
+  }
+
+  function etiquetteStatut(st) {
+    if (st === 'aretrouver') return '<span class="tag chercher">À retrouver</span>';
+    if (st === 'denicher') return '<span class="tag denicher">À dénicher</span>';
+    return '<span class="tag aucoffre">Au coffre</span>';
+  }
+
+  function carteGroupe(g) {
+    var toutes = morceaux.filter(function (x) { return x.collection && cleTitre(x.titre) === g.cle; });
+    var total = toutes.length;
+    // Le titre de référence est celui de la première version rangée
+    var ref = toutes.slice().sort(function (a, b) { return (a.ajoute || '').localeCompare(b.ajoute || ''); })[0];
+    g.titre = ((ref && ref.titre) || g.titre).trim();
+    var detail = ['coffre', 'denicher', 'aretrouver'].map(function (st) {
+      var k = toutes.filter(function (x) { return x.statut === st; }).length;
+      return k ? k + ' ' + LIB[st] : '';
+    }).filter(Boolean).join(' · ');
+    var ouvert = !!ouverts[g.cle];
+    var h = '<article class="card groupe" data-groupe="' + esc(g.cle) + '">' +
+      '<h2>' + esc(g.titre) + '</h2>' +
+      '<div class="resume"><span class="tag collection">Collection</span>' +
+      total + ' version' + (total > 1 ? 's' : '') + (detail ? '' + NB + ': ' + esc(detail) : '') + '</div>';
+    if (g.versions.length < total) h += '<p class="meta">' + g.versions.length + ' affichée' + (g.versions.length > 1 ? 's' : '') + ' ici</p>';
+    if (ouvert) {
+      h += '<ul class="versions">' + g.versions.map(function (m) {
+        var sous = [m.epoque, (m.supports || []).join(', '), (m.liens || []).map(function (l) { return l.plateforme; }).join(', ')]
+          .filter(Boolean).join(' · ');
+        return '<li data-id="' + esc(m.id) + '"><span><strong>' + esc(m.artiste || 'Interprète inconnu') + '</strong>' +
+          (m.artiste ? '' : (m.indices ? '<small>' + esc(m.indices) + '</small>' : '')) +
+          (sous ? '<small>' + esc(sous) + '</small>' : '') + '</span>' + etiquetteStatut(m.statut) + '</li>';
+      }).join('') + '</ul>' +
+      '<button type="button" class="btn second ajoutVersion" data-titre="' + esc(g.titre) + '">＋ Une autre version</button>';
+    } else {
+      h += '<p class="meta">Touche pour voir les versions</p>';
+    }
+    return h + '</article>';
+  }
+
+  function carte(m) {
       var tags = '';
       if (m.statut === 'aretrouver') tags += '<span class="tag chercher">À retrouver</span>';
       if (m.statut === 'denicher') tags += '<span class="tag denicher">À dénicher</span>';
@@ -350,11 +427,16 @@
         (tags ? '<div class="tags">' + tags + '</div>' : '') +
         (m.note ? '<p class="note">' + esc(m.note) + '</p>' : '') +
         '<p class="meta">' + meta.join(' · ') + '</p></article>';
-    }).join('');
   }
 
   $('cartes').addEventListener('click', function (e) {
     if (e.target.closest('a')) return; // un lien d'écoute s'ouvre sans ouvrir la fiche
+    var av = e.target.closest('.ajoutVersion');
+    if (av) { ouvrirFiche(null, { titre: av.getAttribute('data-titre'), collection: true }); return; }
+    var v = e.target.closest('.versions li');
+    if (v) { ouvrirFiche(v.getAttribute('data-id')); return; }
+    var g = e.target.closest('.groupe');
+    if (g) { var k = g.getAttribute('data-groupe'); ouverts[k] = !ouverts[k]; afficherListe(); return; }
     var c = e.target.closest('.card');
     if (c) ouvrirFiche(c.getAttribute('data-id'));
   });
@@ -368,21 +450,25 @@
 
   function afficherMode() {
     var r = modeFiche === 'aretrouver';
-    Array.prototype.forEach.call($('mode').querySelectorAll('.chip'), function (c) {
+    Array.prototype.forEach.call(document.querySelectorAll('.statuts .chip'), function (c) {
       c.classList.toggle('on', c.getAttribute('data-m') === modeFiche);
     });
     $('champIndices').style.display = (r || $('indices').value.trim()) ? '' : 'none';
     $('aideTitre').textContent = r ? 'Si tu ne le connais pas, laisse vide. Tes indices suffisent.'
       : 'Tape quelques lettres' + NB + ': je te propose des morceaux connus.';
-    $('aideStatut').textContent = SENS[modeFiche] || '';
+    Array.prototype.forEach.call(document.querySelectorAll('.aideStatut'), function (p) {
+      p.textContent = SENS[modeFiche] || '';
+    });
     var b = $('btnEtape');
     b.style.display = (enCours && modeFiche !== 'coffre') ? '' : 'none';
     b.textContent = r ? 'Je l\'ai identifié' + NB + '!' : 'Je l\'ai déniché' + NB + '!';
   }
-  $('mode').addEventListener('click', function (e) {
-    var b = e.target.closest('.chip'); if (!b) return;
-    modeFiche = b.getAttribute('data-m');
-    afficherMode();
+  Array.prototype.forEach.call(document.querySelectorAll('.statuts'), function (groupe) {
+    groupe.addEventListener('click', function (e) {
+      var b = e.target.closest('.chip'); if (!b) return;
+      modeFiche = b.getAttribute('data-m');
+      afficherMode();
+    });
   });
   $('btnEtape').addEventListener('click', function () {
     var bravo = $('bravo');
@@ -456,6 +542,8 @@
     $('humeur').value = d.humeur || '';
     $('note').value = d.note || '';
     $('indices').value = d.indices || '';
+    $('collection').checked = !!d.collection || estCollection(cleTitre(d.titre));
+    majAideCollection();
     modeFiche = d.statut || (LIB[filtre] ? filtre : 'coffre');
     etapes = {};
     $('bravo').style.display = 'none';
@@ -471,8 +559,19 @@
     remplirListes();
     document.body.classList.add('edition');
     window.scrollTo(0, 0);
-    if (!m && !(prerempli && prerempli.titre)) $('titre').focus();
+    if (!m) $(prerempli && prerempli.titre ? 'artiste' : 'titre').focus();
   }
+
+  function majAideCollection() {
+    var t = $('titre').value.trim();
+    $('aideCollection').textContent = $('collection').checked && t ?
+      'Toutes tes fiches «' + NB + t + NB + '» se rangent ensemble.' : '';
+  }
+  $('collection').addEventListener('change', majAideCollection);
+  $('titre').addEventListener('input', function () {
+    if (!enCours && estCollection(cleTitre(this.value))) $('collection').checked = true;
+    majAideCollection();
+  });
 
   function fermerFiche() {
     document.body.classList.remove('edition');
@@ -509,6 +608,7 @@
       avecQui: $('avecQui').value.trim(),
       humeur: $('humeur').value.trim(),
       note: $('note').value.trim(),
+      collection: $('collection').checked,
       modifie: maintenant
     };
     if (etapes.identifie && modeFiche !== 'aretrouver') donnees.identifie = maintenant;
@@ -524,6 +624,10 @@
       donnees.ajoute = maintenant;
       morceaux.push(donnees);
     }
+    // La case vaut pour toutes les fiches du même titre
+    var cle = cleTitre(titre);
+    if (cle) morceaux.forEach(function (x) { if (cleTitre(x.titre) === cle) x.collection = donnees.collection; });
+    if (donnees.collection && cle) ouverts[cle] = true;
     enregistrer();
     $('recherche').value = '';
     fermerFiche();
@@ -647,6 +751,7 @@
         if (m.indices) lignes.push('   Ce dont je me souviens' + NB + ': ' + m.indices);
         if (m.identifie) lignes.push('   Identifié le ' + dateFr(m.identifie));
         if (m.deniche) lignes.push('   Déniché le ' + dateFr(m.deniche));
+        if (m.collection) lignes.push('   Dans ma collection de versions');
         if (m.epoque) lignes.push('   Époque' + NB + ': ' + m.epoque);
         if (m.decouverte) lignes.push('   Découvert via' + NB + ': ' + m.decouverte);
         if (m.avecQui) lignes.push('   Avec' + NB + ': ' + m.avecQui);

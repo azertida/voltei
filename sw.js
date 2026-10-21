@@ -1,4 +1,4 @@
-const CACHE_NAME = 'voltei-v11';
+const CACHE_NAME = 'voltei-v13';
 const FICHIERS = ['./', 'index.html', 'manifest.json', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
   'polices/fraunces-latin-600-normal.woff2', 'polices/fraunces-latin-700-normal.woff2',
   'polices/atkinson-hyperlegible-latin-400-normal.woff2', 'polices/atkinson-hyperlegible-latin-700-normal.woff2'];
